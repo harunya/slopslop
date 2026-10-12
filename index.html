@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AION 2 · Energy Tracker</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0e16;--panel:#131927;--panel2:#192235;--line:#29344b;--text:#eef3ff;--muted:#9ba9c3;--accent:#a78bfa;--accent2:#67e8f9;--good:#6ee7b7;--danger:#fda4af}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#19233b 0%,var(--bg) 58%);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+main{max-width:1050px;margin:0 auto;padding:38px 20px 60px}.top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+.eyebrow{color:var(--accent2);text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:800}
+h1{font-size:clamp(28px,4vw,40px);letter-spacing:-.04em;margin:5px 0 7px}.subtitle{color:var(--muted);max-width:590px;margin:0}
+button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--panel2);color:var(--text);transition:.15s}button:hover{border-color:var(--accent);transform:translateY(-1px)}
+.add{background:var(--accent);color:#160f2b;border-color:transparent;font-weight:800;display:inline-flex;align-items:center;gap:8px}.add .plus{font-size:22px;line-height:16px}
+.settings{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:22px}.panel{background:rgba(19,25,39,.92);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 12px 35px #0002}
+.panel h2{font-size:14px;margin:0 0 5px;letter-spacing:.02em}.hint{font-size:12px;color:var(--muted);margin:0 0 13px}
+.field-label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+input{width:100%;min-width:0;background:#0d1320;border:1px solid #34415a;border-radius:10px;color:var(--text);padding:10px 11px;outline:none}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #a78bfa22}
+.schedule-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.schedule-row button{padding:10px 12px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:13px}.stat{background:#0d1320;border:1px solid var(--line);border-radius:10px;padding:8px 10px;flex:1;min-width:110px}.stat small{display:block;color:var(--muted);font-size:11px}.stat strong{font-size:16px}
+.list-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 13px}.list-head h2{margin:0;font-size:18px}.count{color:var(--muted);font-size:12px}
+.characters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.char{background:linear-gradient(145deg,#171f31,#111725);border:1px solid var(--line);border-radius:18px;padding:17px;min-width:0}.char-top{display:flex;gap:10px;align-items:center;margin-bottom:15px}.avatar{height:38px;width:38px;flex:none;border-radius:12px;display:grid;place-items:center;background:#a78bfa1c;color:var(--accent);font-size:20px}.name-wrap{flex:1;min-width:0}.name-wrap input{font-weight:750;font-size:16px;padding:8px 10px}.delete{color:var(--muted);padding:7px 10px;background:transparent}.delete:hover{color:var(--danger);border-color:var(--danger)}
+.energy-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}.energy-row label{font-size:12px;color:var(--muted)}.energy-input{width:105px;text-align:right;font-weight:750;font-variant-numeric:tabular-nums}
+.meter{height:9px;border-radius:20px;background:#080c14;overflow:hidden;border:1px solid #283249}.fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:20px;transition:width .25s}
+.meter-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:6px}
+.preview{margin-top:16px;background:#0d1320;border:1px solid #29354c;border-radius:13px;padding:12px}.preview-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.preview-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}.time{font-size:19px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.target{font-size:12px;color:var(--good);font-weight:700}.preview-bottom{font-size:11px;color:var(--muted);margin-top:4px}
+.empty{border:1px dashed #3a4660;border-radius:18px;padding:35px 20px;text-align:center;color:var(--muted);grid-column:1/-1}.footer{color:var(--muted);font-size:12px;text-align:center;margin-top:28px}
+@media(max-width:700px){main{padding:25px 13px 40px}.settings,.characters{grid-template-columns:1fr}.top{margin-bottom:20px}.panel{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div><div class="eyebrow">AION 2 · Character management</div><h1>Energy tracker</h1><p class="subtitle">Track each character’s energy and see how long until their next safe recharge target. Your data stays in this browser.</p></div>
+    <button class="add" id="addTop" type="button"><span class="plus">＋</span> Add character</button>
+  </header>
+
+  <section class="settings">
+    <div class="panel">
+      <h2>Recharge schedule</h2><p class="hint">Set the next energy tick. Every 3 hours after that, each character gains 15 energy.</p>
+      <label class="field-label" for="nextRecharge">Next recharge date &amp; time</label>
+      <div class="schedule-row"><input id="nextRecharge" type="datetime-local"><button id="setNextHour" type="button">Next hour</button></div><div class="preview" style="margin-top:10px"><div class="preview-top"><span class="preview-label">Next recharge starts in</span><strong class="target" id="scheduleCountdown">—</strong></div><div class="preview-bottom" id="scheduleNextLabel">Next tick: —</div></div>
+      <div class="stats"><div class="stat"><small>Recharge interval</small><strong>3 hours</strong></div><div class="stat"><small>Per recharge</small><strong>+15 energy</strong></div><div class="stat"><small>Energy cap</small><strong>840</strong></div></div>
+    </div>
+    <div class="panel">
+      <h2>How the preview works</h2><p class="hint">The estimate follows the shared recharge schedule, separately for every character.</p>
+      <div style="color:#dce5f8;font-size:13px">The target is the highest 15-energy step that does not exceed 840. For example, a character at 815 reaches a preview target of <strong style="color:var(--good)">830</strong> on the next tick; it won’t predict 845.</div>
+      <p class="hint" style="margin:12px 0 0">Names, energy values, and the schedule save automatically in local browser storage.</p>
+    </div>
+  </section>
+
+  <div class="list-head"><h2>Your characters</h2><span class="count" id="count">0 characters</span></div>
+  <section class="characters" id="characters"></section>
+  <div class="footer">Saved locally on this device · No account or server required</div>
+</main>
+<script>
+(() => {
+  const STORAGE_KEY = 'aion2-energy-tracker-v1';
+  const CAP = 840, GAIN = 15, INTERVAL = 3 * 60 * 60 * 1000;
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2, '0');
+  const toLocalInput = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const roundNextHour = () => { const d = new Date(); d.setMinutes(0,0,0); d.setHours(d.getHours()+1); return d; };
+  const defaultState = () => ({nextRecharge: roundNextHour().getTime(), characters:[{id:makeId(),name:'Character 1',energy:600},{id:makeId(),name:'Character 2',energy:600}]});
+  function makeId(){ return (Date.now().toString(36)+Math.random().toString(36).slice(2,8)); }
+  function load(){ try { const s=JSON.parse(localStorage.getItem(STORAGE_KEY)); if(s && Array.isArray(s.characters) && Number.isFinite(s.nextRecharge)) return s; } catch(e){} return defaultState(); }
+  let state = load();
+  function save(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){} }
+  // Apply every recharge that has elapsed, including while the page was closed.
+  // Advance the shared schedule so the displayed next recharge is always in the future.
+  function processDueRecharges(now=Date.now()){
+    if(now < state.nextRecharge) return;
+    const ticks = Math.floor((now-state.nextRecharge)/INTERVAL)+1;
+    for(const c of state.characters){
+      c.energy = Math.min(CAP, Math.max(0, Number(c.energy)||0) + ticks*GAIN);
+      delete c.energySetAt;
+    }
+    state.nextRecharge += ticks*INTERVAL;
+    save();
+  }
+  function currentEnergy(c){ return Math.min(CAP, Math.max(0, Number(c.energy)||0)); }
+  function timeToTarget(c, now=Date.now()){
+    const energy = currentEnergy(c);
+    // Stop at the last reachable +15 step that does not exceed the 840 cap.
+    const steps = Math.floor((CAP-energy)/GAIN);
+    const target = energy + steps*GAIN;
+    if (steps <= 0) return {energy,target,ms:0,full:true};
+    const firstTick = state.nextRecharge;
+    return {energy,target,ms:Math.max(0,firstTick-now)+(steps-1)*INTERVAL,full:false};
+  }
+  function duration(ms){
+    let seconds=Math.max(0,Math.ceil(ms/1000));
+    const days=Math.floor(seconds/86400); seconds%=86400;
+    const hours=Math.floor(seconds/3600); seconds%=3600;
+    const mins=Math.floor(seconds/60);
+    if(days) return `${days}d ${hours}h`;
+    if(hours) return `${hours}h ${mins}m`;
+    if(mins) return `${mins}m`;
+    return `${seconds}s`;
+  }
+  function fmtDate(ms){ return new Date(ms).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
+  function renderSchedule(now=Date.now()){
+    // Never replace the schedule input while it has focus; this keeps date/time edits stable.
+    if(document.activeElement !== $('nextRecharge')) $('nextRecharge').value=toLocalInput(new Date(state.nextRecharge));
+    $('scheduleCountdown').textContent=duration(Math.max(0,state.nextRecharge-now));
+    $('scheduleNextLabel').textContent=`Next tick: ${fmtDate(state.nextRecharge)} · +15 energy per character`;
+    $('count').textContent=`${state.characters.length} character${state.characters.length===1?'':'s'}`;
+  }
+  function updateCharacterCards(now=Date.now()){
+    for(const c of state.characters){
+      const card=$('characters').querySelector(`[data-char-id="${c.id}"]`);
+      if(!card) continue;
+      const energy=currentEnergy(c), p=timeToTarget(c,now), pct=Math.min(100,energy/CAP*100);
+      const energyInput=card.querySelector('.energy-input');
+      // Do not clobber a value while someone is typing into the energy field.
+      if(document.activeElement !== energyInput) energyInput.value=energy;
+      const fill=card.querySelector('.fill');
+      fill.style.width=`${pct}%`;
+      const meter=card.querySelector('.meter'); meter.setAttribute('aria-valuenow',energy);
+      const meta=card.querySelector('.meter-meta');
+      meta.children[0].textContent=`${energy} / ${CAP}`;
+      meta.children[1].textContent=`${CAP-energy} to cap`;
+      card.querySelector('.target').textContent=`${p.target} energy`;
+      card.querySelector('.time').textContent=p.full?'Target reached':duration(p.ms);
+      card.querySelector('.preview-bottom').textContent=p.full?'No further +15 step fits under the 840 cap.':`Target reached around ${fmtDate(now+p.ms)} · No overflow predicted`;
+    }
+  }
+  function renderCharacters(){
+    const root=$('characters'); root.innerHTML='';
+    if(!state.characters.length){
+      const empty=document.createElement('div'); empty.className='empty'; empty.innerHTML='<div style="font-size:28px;margin-bottom:8px">＋</div><strong>No characters yet</strong><div style="margin:6px 0 15px">Add a character to start tracking energy.</div><button class="add" id="emptyAdd">＋ Add character</button>'; root.append(empty); $('emptyAdd').onclick=addCharacter; return;
+    }
+    state.characters.forEach(c=>{
+      const card=document.createElement('article'); card.className='char'; card.dataset.charId=c.id;
+      card.innerHTML=`
+        <div class="char-top"><div class="avatar">✦</div><div class="name-wrap"><label class="field-label" for="name-${c.id}">Character name</label><input id="name-${c.id}" aria-label="Character name" maxlength="60"></div><button class="delete" type="button" title="Remove character" aria-label="Remove character">✕</button></div>
+        <div class="energy-row"><label for="energy-${c.id}">Current energy</label><input class="energy-input" id="energy-${c.id}" type="number" min="0" max="840" step="1" aria-label="Energy, 0 to 840"></div>
+        <div class="meter" role="progressbar" aria-label="Energy level" aria-valuemin="0" aria-valuemax="840" aria-valuenow="0"><div class="fill"></div></div>
+        <div class="meter-meta"><span>0 / ${CAP}</span><span>${CAP} to cap</span></div>
+        <div class="preview"><div class="preview-top"><span class="preview-label">Full target in</span><span class="target">— energy</span></div><div class="time">—</div><div class="preview-bottom">—</div></div>`;
+      const name=card.querySelector('.name-wrap input'); name.value=c.name;
+      name.addEventListener('input',()=>{c.name=name.value;save();});
+      const energyInput=card.querySelector('.energy-input'); energyInput.value=currentEnergy(c);
+      energyInput.addEventListener('change',()=>{
+        let v=Number(energyInput.value); if(!Number.isFinite(v))v=0;
+        v=Math.max(0,Math.min(CAP,Math.floor(v))); c.energy=v; save();
+        // Update values in place instead of rebuilding the card, so focus/selection isn't lost.
+        updateCharacterCards();
+      });
+      card.querySelector('.delete').addEventListener('click',()=>{if(confirm(`Remove ${c.name || 'this character'}?`)){state.characters=state.characters.filter(x=>x.id!==c.id);save();renderCharacters();renderSchedule();updateCharacterCards();}});
+      root.append(card);
+    });
+    updateCharacterCards();
+  }
+  function render(){
+    const now=Date.now();
+    processDueRecharges(now);
+    renderSchedule(now);
+    renderCharacters();
+  }
+  function addCharacter(){
+    const n=state.characters.length+1;
+    state.characters.push({id:makeId(),name:`Character ${n}`,energy:0});
+    save();render();
+    const inputs=$('characters').querySelectorAll('.name-wrap input'); if(inputs.length) inputs[inputs.length-1].focus();
+  }
+  $('addTop').addEventListener('click',addCharacter);
+  $('nextRecharge').addEventListener('change',()=>{
+    const d=new Date($('nextRecharge').value);
+    if(!Number.isNaN(d.getTime())){state.nextRecharge=d.getTime();save();render();}
+  });
+  $('setNextHour').addEventListener('click',()=>{state.nextRecharge=roundNextHour().getTime();save();render();});
+  // Build the character cards once; then update countdowns and values in place each second.
+  render(); setInterval(()=>{const now=Date.now();processDueRecharges(now);renderSchedule(now);updateCharacterCards(now);},1000);
+})();
+</script>
+</body>
+</html>
